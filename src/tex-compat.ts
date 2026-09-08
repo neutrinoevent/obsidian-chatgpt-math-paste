@@ -18,37 +18,54 @@
  * rewriting them incorrectly.
  */
 
+const INT2 = "{\\int\\!\\!\\!\\!\\int}";
+const INT3 = "{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}";
+
+/**
+ * Builds a closed integral: integral signs with a circle centred on them.
+ *
+ * MathJax has no closed-integral command; those live in `esint`, which
+ * Obsidian does not load. The obvious composition, typesetting the integrals
+ * and then kerning backwards to draw the circle, is wrong: it leaves a box
+ * narrower than the ink it contains, so in text style the circle is drawn
+ * outside its own box and paints over the preceding character.
+ *
+ * This construction avoids that. `\mathclap` centres its argument on the
+ * current point with zero width, so the integrals and the circle are centred
+ * on each other exactly, with no kerning constant to tune. The padding on
+ * either side is what gives the operator its width, and being symmetric it
+ * cannot shift the contents off centre.
+ *
+ * The padding must therefore be at least half the wider of the two, and
+ * display style uses a larger integral glyph than text style, so it is chosen
+ * per style with `\mathchoice`. `\nolimits` reproduces the limit placement of
+ * an integral, which `\mathop` would otherwise centre above and below.
+ *
+ * Verified by rendering: see `tests/mathjax-render.test.ts`.
+ */
+function closedIntegral(
+  integrals: string,
+  displayPad: number,
+  textPad: number,
+): string {
+  const pad =
+    `\\mathchoice{\\mkern${displayPad}mu}{\\mkern${textPad}mu}` +
+    `{\\mkern${textPad}mu}{\\mkern${textPad}mu}`;
+
+  return `\\mathop{${pad}\\mathclap{${integrals}}\\mathclap{\\bigcirc}${pad}}\\nolimits`;
+}
+
 /** Commands MathJax does not define, mapped to equivalents that it does. */
 export const MATHJAX_REPLACEMENTS: Readonly<Record<string, string>> = {
   // --- Closed integrals -------------------------------------------------
-  // These belong to `esint`, which Obsidian does not load, so they are
-  // composed from base commands. The trailing \nolimits reproduces the limit
-  // placement of an integral; \mathop would otherwise centre limits above and
-  // below in display style.
-  oiint: "\\mathop{{\\int\\!\\!\\!\\!\\int}\\mkern-21mu\\bigcirc}\\nolimits",
-  oiiint:
-    "\\mathop{{\\int\\!\\!\\!\\!\\int\\!\\!\\!\\!\\int}\\mkern-31mu\\bigcirc}\\nolimits",
+  // Padding is half the width of the widest component at that style: the
+  // circle in text style, the integral group in display style.
+  oiint: closedIntegral(INT2, 12.5, 9),
+  oiiint: closedIntegral(INT3, 16.5, 9),
 
-  // --- Colon relations from `mathtools` ---------------------------------
-  // \mathrel keeps relation spacing around the pair while suppressing it
-  // between the two symbols.
-  coloneqq: "\\mathrel{:=}",
-  Coloneqq: "\\mathrel{::=}",
-  coloneq: "\\mathrel{:-}",
-  eqqcolon: "\\mathrel{=:}",
-  Eqqcolon: "\\mathrel{=::}",
-  eqcolon: "\\mathrel{-:}",
-
-  // --- Named delimiters from `unicode-math` -----------------------------
-  lparen: "(",
-  rparen: ")",
+  // --- Named delimiters -------------------------------------------------
   lang: "\\langle",
   rang: "\\rangle",
-
-  // --- Degree -----------------------------------------------------------
-  // The empty group gives the superscript a base, so the result stays valid
-  // wherever the command appeared.
-  degree: "{}^\\circ",
 
   // --- KaTeX's HTML-entity style arrow aliases --------------------------
   darr: "\\downarrow",
@@ -90,49 +107,26 @@ export const MATHJAX_REPLACEMENTS: Readonly<Record<string, string>> = {
   hearts: "\\heartsuit",
   spades: "\\spadesuit",
   Dagger: "\\ddagger",
-  gggtr: "\\ggg",
-
-  // --- Overlap boxes ----------------------------------------------------
-  // Same arity as the base commands, so a token substitution is exact.
-  mathllap: "\\llap",
-  mathrlap: "\\rlap",
 };
 
 /**
- * Commands that are known to be renderer-specific but cannot be repaired by a
- * token substitution, either because they consume arguments in a way that
- * changes the surrounding structure or because MathJax has no equivalent.
+ * Commands confirmed to fail in Obsidian that a token substitution cannot
+ * repair, because they consume arguments in a way that changes the surrounding
+ * structure or because MathJax has no equivalent at all.
  *
  * These are reported by the diagnostic rather than rewritten. Rewriting them
  * incorrectly would be worse than leaving TeX that a user can see and fix.
  */
 export const UNSUPPORTED_COMMANDS: readonly string[] = [
   // KaTeX-only presentation and linking commands with no MathJax counterpart.
-  "href",
   "htmlClass",
   "htmlId",
   "htmlStyle",
   "htmlData",
   "includegraphics",
   "KaTeX",
-  // Need an argument template rather than a token swap.
+  // Needs an argument template rather than a token swap.
   "utilde",
-  "mathclap",
-  "overparen",
-  "underparen",
-  // Depend on a MathJax extension that Obsidian may or may not autoload.
-  // Reported so a real failure can be confirmed before anything is rewritten.
-  "cancel",
-  "bcancel",
-  "xcancel",
-  "bra",
-  "ket",
-  "braket",
-  "Bra",
-  "Ket",
-  "Braket",
-  "ketbra",
-  "Ketbra",
 ];
 
 const UNSUPPORTED = new Set(UNSUPPORTED_COMMANDS);

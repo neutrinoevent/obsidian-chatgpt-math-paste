@@ -190,10 +190,17 @@ reporting policy and trust boundaries.
 
 ```bash
 npm ci          # reproducible dependency install
-npm test        # run converter tests
+npm test        # run converter and rendering tests
 npm run build   # type-check and create main.js
 npm run check   # test, type-check, and build
 ```
+
+Tests run in two layers. The converter suites check that the right strings are
+produced. The rendering suite runs those strings through MathJax itself and
+checks that they can actually be drawn: that every replacement renders, and
+that composed symbols keep their ink inside their own box rather than painting
+over neighbouring text. MathJax is a development dependency only; the plugin
+still ships no runtime dependencies.
 
 Generated `main.js`, dependencies, release archives, and operating-system
 metadata are excluded from source control. A release archive contains the three
@@ -210,7 +217,9 @@ entry and one test:
 2. add the command to `MATHJAX_REPLACEMENTS` in `src/tex-compat.ts`, using
    only commands MathJax defines by default, or to `UNSUPPORTED_COMMANDS` if a
    single-token substitution cannot express it;
-3. add a regression test in `tests/tex-compat.test.ts`; and
+3. add a regression test in `tests/tex-compat.test.ts`, and, if the
+   replacement is a composed symbol rather than a plain alias, a geometry
+   assertion in `tests/mathjax-render.test.ts`; and
 4. run `npm run check`, then verify the rendering in a vault.
 
 ## Release history
@@ -222,6 +231,8 @@ See [CHANGELOG.md](CHANGELOG.md).
   integration.
 - `1.2.0` — renderer compatibility between KaTeX and MathJax, repair of
   existing notes, and an unsupported-command diagnostic.
+- `1.2.1` — corrected closed-integral rendering, pruned the compatibility
+  tables against a real vault, and added MathJax rendering tests.
 
 ## License
 

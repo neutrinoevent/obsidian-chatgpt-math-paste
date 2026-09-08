@@ -8,7 +8,7 @@ work without relying on private machine or vault context.
 ## Start here after a reboot
 
 1. Read this file, `README.md`, `CHANGELOG.md`, `SECURITY.md`, and `IDEAS.md`.
-2. Confirm `package.json` and `manifest.json` both report version `1.2.0`.
+2. Confirm `package.json` and `manifest.json` both report version `1.2.1`.
 3. Restore dependencies and verify the repository:
 
    ```bash
@@ -25,7 +25,7 @@ work without relying on private machine or vault context.
 
 ## Current checkpoint
 
-- Source and release version: `1.2.0`.
+- Source and release version: `1.2.1`.
 - Intended repository: `https://github.com/neutrinoevent/obsidian-chatgpt-math-paste`.
 - Git identity in use: `neutrinoevent` with the GitHub noreply address, so
   commit metadata carries no real name or personal email. Re-check this before
@@ -33,12 +33,12 @@ work without relying on private machine or vault context.
 - Functional state: manually tested successfully in Obsidian, including unusual
   math cases. The `1.2.0` renderer compatibility fix was confirmed in Obsidian
   on 2026-09-08 by re-pasting the response that originally failed.
-- Automated state: 23 tests pass across three suites, the production bundle
+- Automated state: 118 tests pass across four suites, the production bundle
   builds, and the dependency audit reported zero known vulnerabilities at the
-  last check.
-- Release artifact: `chatgpt-math-paste-1.2.0.zip`. The superseded
-  `chatgpt-math-paste-1.1.0.zip` may still be present locally; it was never
-  published and is ignored by Git.
+  last check. The fourth suite renders TeX through MathJax itself.
+- Release artifact: `chatgpt-math-paste-1.2.1.zip`. The superseded
+  `chatgpt-math-paste-1.1.0.zip` and `chatgpt-math-paste-1.2.0.zip` may still be
+  present locally; both are ignored by Git.
 - Release checksum: stored separately in `SHA256SUMS` so the ZIP does not contain
   a self-referential checksum.
 - Publication state: the tree is a local Git repository on `main` with a single
@@ -176,6 +176,14 @@ refreshed together.
   expanded architecture/security documentation, and continuous integration.
 - `1.2.0`: KaTeX-to-MathJax renderer compatibility, repair of existing notes,
   an unsupported-command diagnostic, and `IDEAS.md`.
+- `1.2.1`: corrected closed-integral rendering, compatibility tables pruned
+  against a real vault, and MathJax rendering tests.
+
+The `1.2.0` tables were built from reasoning about which packages MathJax
+loads. Testing them in Obsidian 1.13.7 showed twelve of fifty-three
+replacements and fifteen of twenty-two unsupported entries were wrong. Do not
+add a table entry without confirming the failure first; `IDEAS.md` I3 records
+what was verified and how.
 
 Extracting the original TeX faithfully is necessary but not sufficient. The
 `1.2.0` work established the second half of the problem: output must also be
@@ -215,9 +223,9 @@ state that a new session must preserve:
 - Inspect the exact staged file list before committing. `node_modules`,
   `.DS_Store`, `main.js`, ZIP files, plugin `data.json`, and coverage output must
   remain excluded.
-- Tag the release as `1.2.0` or `v1.2.0` consistently with the chosen repository
+- Tag the release as `1.2.1` or `v1.2.1` consistently with the chosen repository
   convention. Obsidian manifests use the value without a leading `v`.
-- Upload `chatgpt-math-paste-1.2.0.zip` and `SHA256SUMS` as release assets because
+- Upload `chatgpt-math-paste-1.2.1.zip` and `SHA256SUMS` as release assets because
   both are intentionally outside normal source control.
 - Enabling private vulnerability reporting is a repository-owner action to take
   before or immediately after making the repository public.
@@ -227,7 +235,7 @@ state that a new session must preserve:
 After `npm run check`, construct the release ZIP from the project root:
 
 ```bash
-COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.0.zip \
+COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.1.zip \
   manifest.json main.js versions.json README.md LICENSE \
   CONTEXT_HANDOFF.md CHANGELOG.md SECURITY.md RELEASE_CHECKLIST.md IDEAS.md
 ```
@@ -235,9 +243,9 @@ COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.0.zip \
 Then verify the archive before updating `SHA256SUMS`:
 
 ```bash
-unzip -t chatgpt-math-paste-1.2.0.zip
-zipinfo -1 chatgpt-math-paste-1.2.0.zip
-shasum -a 256 chatgpt-math-paste-1.2.0.zip
+unzip -t chatgpt-math-paste-1.2.1.zip
+zipinfo -1 chatgpt-math-paste-1.2.1.zip
+shasum -a 256 chatgpt-math-paste-1.2.1.zip
 ```
 
 Expected entries are relative top-level filenames only. Reject entries beginning
@@ -246,6 +254,16 @@ with `/`, containing `..`, or named `.DS_Store` or `__MACOSX`.
 ## Dependency and CI decisions
 
 - Runtime bundle dependency: only Obsidian, kept external by esbuild.
+- `mathjax-full` is a development dependency used by the rendering tests. It is
+  large, at roughly 40MB with seven transitive dependencies, and was accepted
+  deliberately: silent rendering failure is this project's core defect class,
+  and it was previously detectable only by hand in a vault.
+- `package.json` pins `@xmldom/xmldom` through an npm `overrides` entry.
+  `mathjax-full` depends on `speech-rule-engine`, which pulled in a version
+  with a moderate XML-injection advisory. The override restores a zero-finding
+  audit. It is test-only code and cannot reach the plugin or its users, but the
+  clean audit is worth keeping as a signal. Revisit the override when
+  `speech-rule-engine` updates its own dependency.
 - All npm packages are development/test dependencies; the plugin ships no npm
   dependency tree.
 - Node.js 18 remains the minimum development version for this release.

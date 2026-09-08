@@ -1,6 +1,6 @@
 {
   "name": "obsidian-chatgpt-math-paste",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "private": true,
   "description": "An Obsidian plugin that preserves ChatGPT LaTeX when pasting responses.",
   "license": "MIT",
@@ -36,8 +36,12 @@
     "@types/node": "^22.15.17",
     "esbuild": "^0.25.5",
     "jsdom": "^26.1.0",
+    "mathjax-full": "^3.2.1",
     "obsidian": "^1.13.1",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "@xmldom/xmldom": "^0.9.12"
   }
 }

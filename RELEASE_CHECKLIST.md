@@ -14,7 +14,7 @@ vault paths.
   release version rather than `unreleased`.
 - The plugin manifest contains only intended public attribution.
 
-For `1.2.0`, the expected minimum Obsidian version is `1.5.0`.
+For `1.2.1`, the expected minimum Obsidian version is `1.5.0`.
 
 ## 2. Reproduce the verified build
 
@@ -24,9 +24,9 @@ npm run check
 npm audit --audit-level=low
 ```
 
-Expected baseline for `1.2.0`:
+Expected baseline for `1.2.1`:
 
-- all tests pass (23 at the last check);
+- all tests pass (118 at the last check);
 - TypeScript type-checking succeeds;
 - esbuild produces `main.js`; and
 - npm reports zero known vulnerabilities.
@@ -69,13 +69,13 @@ commands, telemetry, background note scanning, or credential access.
 ## 5. Build and verify the release archive
 
 ```bash
-COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.0.zip \
+COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.1.zip \
   manifest.json main.js versions.json README.md LICENSE \
   CONTEXT_HANDOFF.md CHANGELOG.md SECURITY.md RELEASE_CHECKLIST.md IDEAS.md
 
-unzip -t chatgpt-math-paste-1.2.0.zip
-zipinfo -1 chatgpt-math-paste-1.2.0.zip
-shasum -a 256 chatgpt-math-paste-1.2.0.zip
+unzip -t chatgpt-math-paste-1.2.1.zip
+zipinfo -1 chatgpt-math-paste-1.2.1.zip
+shasum -a 256 chatgpt-math-paste-1.2.1.zip
 ```
 
 Update `SHA256SUMS` with the final digest and confirm it:
@@ -113,8 +113,8 @@ Generated `main.js`, ZIP archives, `node_modules`, `.DS_Store`, plugin
 
 - Create the public GitHub repository only with explicit authorization.
 - Push the reviewed source commit.
-- Create the chosen `1.2.0`/`v1.2.0` tag convention.
-- Attach `chatgpt-math-paste-1.2.0.zip` and `SHA256SUMS` to the GitHub release.
+- Create the chosen `1.2.1`/`v1.2.1` tag convention.
+- Attach `chatgpt-math-paste-1.2.1.zip` and `SHA256SUMS` to the GitHub release.
 - Enable private vulnerability reporting under the repository's Security
   settings.
 - Confirm GitHub Actions passes on all configured Node.js versions.

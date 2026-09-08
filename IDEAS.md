@@ -95,31 +95,43 @@ setting for users who prioritise verbatim TeX over portability.
 
 ### I3 — Candidate compatibility gaps to verify empirically
 
-State: `needs verification` (table shipped; entries still unconfirmed)
+State: `done` (verified in Obsidian 2026-09-08)
 
-Suspected KaTeX-supported commands absent from Obsidian's default MathJax
-configuration. Each needs to be confirmed in a real vault before being added
-to the I1 table; guessing risks rewriting TeX that already worked.
+Verified in Obsidian on 2026-09-08 by opening a generated fixture covering
+every table entry. The result substantially pruned both tables.
 
-- `\oiint` (confirmed failing, see D1), `\oiiint` (assumed, same family)
-- `\coloneqq`, `\Coloneqq`, `\eqqcolon`, `\coloneq`
+Confirmed failing, kept in the table:
+
+- `\oiint`, `\oiiint`
+- `\lang`, `\rang`
+- all fifteen arrow aliases (`\darr`, `\rArr`, `\Harr`, ...)
+- twenty-two symbol aliases (`\sub`, `\isin`, `\infin`, `\alef`, ...)
+
+Confirmed rendering natively, removed from the table:
+
+- `\coloneqq`, `\Coloneqq`, `\coloneq`, `\eqqcolon`, `\Eqqcolon`,
+  `\eqcolon` — and notably the replacements rendered *worse* than the
+  originals, introducing spurious spacing in `:-` and `-:`
 - `\lparen`, `\rparen`
-- `\darr`, `\uarr`, `\rarr`, `\lArr`, `\rArr`, `\dArr`, `\uArr`
 - `\degree`
-- `\mathllap`, `\mathrlap`, `\mathclap`
-- `\overparen`, `\underparen`
-- `\utilde`
-- `\bra`, `\ket`, `\braket`, `\Bra`, `\Ket`
-- `\href`, `\htmlClass`, `\htmlId`, `\htmlStyle` (KaTeX-specific, no MathJax
-  equivalent; likely strip to the visible argument)
+- `\gggtr`
+- `\mathllap`, `\mathrlap`
 
-Method: paste each into a scratch note, record which produce MathJax
-`merror` output, and confirm or remove the corresponding table entry.
+Confirmed rendering natively, removed from the unsupported list:
 
-The broad table was shipped ahead of this verification by explicit choice,
-preferring coverage over minimalism. The residual risk is rewriting a command
-that already rendered, which changes note source without breaking rendering.
-The reverse risk, silent failure, was judged worse.
+- `\href`, `\mathclap`, `\overparen`, `\underparen`
+- `\cancel`, `\bcancel`, `\xcancel`
+- `\bra`, `\ket`, `\braket`, `\Bra`, `\Ket`, `\Braket`, `\ketbra`,
+  `\Ketbra`
+
+Still failing, so still reported by the diagnostic: `\htmlClass`, `\htmlId`,
+`\htmlStyle`, `\htmlData`, `\includegraphics`, `\KaTeX`, `\utilde`.
+
+Twelve of fifty-three replacement entries and fifteen of twenty-two
+unsupported entries were wrong. Shipping the broad table ahead of verification
+was the right call for coverage but produced a real error rate, and the colon
+relations show the concrete cost: a rewrite can be worse than no rewrite.
+Verify before adding, now that a fixture generator exists.
 
 ### I4 — Apply the compatibility layer to the plain-text path
 
@@ -161,16 +173,54 @@ commands are reported by the diagnostic in the meantime.
 
 ### I7 — Verify the kerning of the composed integral operators
 
-State: `partly verified` (2026-09-08)
+State: `done` (1.2.1) — and the approach it assumed was abandoned
 
 `\oiint` and `\oiiint` are composed as `\int\!\!\!\!\int` with the circle
 pulled back by `\mkern-21mu` and `\mkern-31mu` respectively. The double
 integral value is the widely used one; the triple integral value was derived
 by analogy and has not been checked visually.
 
-`\oiint` was confirmed visually in Obsidian on 2026-09-08: the circle is
-centred over the double integral and the `\partial V` subscript sits in the
-expected place at display size. `\oiiint` remains unverified.
+`\oiint` is correct at display size, confirmed 2026-09-08.
+
+`\oiiint` is wrong: at `-31mu` the circle overshoots to the left, overlapping
+the first integral sign and colliding with the subscript. Deriving from the
+working `\oiint` value, where the circle centre must land at half the operator
+width, gives `|k| = W/2 + C/2` with `W2 = 2w - 12mu` and `W3 = 3w - 24mu`, so
+`|k3| = 0.5w + 15`, or roughly 24 to 25mu rather than 31.
+
+Round 2 (Obsidian 1.13.7) settled the display case and disproved the whole
+approach for the inline case:
+
+- `-24mu` is correct for `\oiiint` at display size, as derived.
+- No kern value fixes inline rendering. At `-21mu` and `-24mu` the circle is
+  drawn *outside its own box* and covers the preceding character; a colon
+  immediately before the symbol disappears underneath it. `\mathchoice` with
+  a text-style kern of `-17mu` still collides.
+
+Root cause: the construction typesets the integrals, kerns backwards, then
+draws the circle, so the box's advance width is `W/2 + C/2` while its visual
+extent is `W`. In text style `\int` is narrow enough that `W` is smaller than
+the kern, and the circle lands at a negative offset. This is a box-width
+defect, not a kerning defect, which is why tuning the constant cannot fix it.
+
+Resolved in 1.2.1 by abandoning kerning entirely rather than tuning it.
+
+The construction now centres the integrals and the circle on each other with
+`\mathclap`, which has zero width, and derives the operator's width from
+symmetric padding on either side. Because the padding is symmetric it cannot
+shift the contents off centre, so centring is exact by construction with no
+constant to tune. Only the width needs a value, chosen per math style with
+`\mathchoice`, and it merely has to be at least half the widest component.
+
+Measured with MathJax locally rather than by inspection. Before: circle at
+`[-448, 552]` against integrals at `[0, 719]` in text style, 448 units of ink
+outside the box, 308 off centre. After: 0 off centre and ink within the box in
+both styles, for both commands.
+
+This is the entry to re-read before adding any composed symbol. The lesson is
+that a symbol can be centred and still be broken, because the box matters
+independently of what is drawn in it, and that eyeballing a screenshot cannot
+distinguish the two.
 
 ### I8 — Consider whether the normalize commands should also repair math
 
@@ -181,15 +231,48 @@ delimiters. The new "Fix math commands Obsidian cannot render" command does
 delimiters and compatibility together. Four commands may be more surface than
 this deserves; merging them would be simpler but changes documented behaviour.
 
+### I9 — Rendering tests
+
+State: `done` (1.2.1)
+
+`tests/mathjax-render.test.ts` runs replacements through MathJax and asserts
+that they render and that composed symbols keep their ink inside their box.
+`mathjax-full` is a development dependency for this; it is 40MB with seven
+transitive dependencies, which is a real cost, accepted because silent
+rendering failure is this project's core defect class and was previously
+detectable only by hand in a vault.
+
+The suite is mutation-tested: restoring the 1.2.0 construction fails four
+assertions, a replacement using an undefined command fails two, and an
+under-sized padding constant fails one.
+
+Note that MathJax's `noundefined` extension is deliberately excluded from the
+test configuration. It is what makes Obsidian draw an unknown command as red
+text instead of failing, which is exactly the silent failure being guarded
+against; excluding it turns that into a hard error the tests can see.
+
 ---
 
 ## Open questions
 
 ### Q1 — Which MathJax packages does Obsidian actually load?
 
-State: `open`
+State: `answered enough to work with` (Obsidian 1.13.7)
 
 The whole compatibility surface depends on this, and it is currently an
 assumption rather than a verified fact. It may also change between Obsidian
-releases, which would make I1's table version-sensitive. Worth pinning down
-and recording here, along with the Obsidian version it was checked against.
+releases, which would make I1's table version-sensitive.
+
+Evidence from the I3 fixture: autoload is clearly enabled. `\cancel`,
+`\bcancel`, `\xcancel`, the whole `braket` family, `\href`, `\mathclap`,
+`\overparen`, and `\underparen` all render, and the `mathtools` colon
+relations are present. Only KaTeX-specific HTML commands and `\utilde` fail.
+This is a much larger surface than base plus ams alone.
+
+All compatibility results in this file were observed on **Obsidian 1.13.7**.
+Re-verify with the fixture generator if a future Obsidian changes its MathJax
+configuration.
+
+`\unicode` resolves, and raw `\u222F` / `\u2230` characters render too. The
+glyphs are correct but stay text-sized: unlike `\int`, they do not grow in
+display style, so they look undersized beside a real `\iiint`.

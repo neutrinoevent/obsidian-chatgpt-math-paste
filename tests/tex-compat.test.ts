@@ -6,6 +6,27 @@ import {
 } from "../src/tex-compat";
 
 describe("applyMathJaxCompatibility", () => {
+  it("leaves commands Obsidian renders natively alone", () => {
+    // Verified in Obsidian on 2026-09-08. These were in the table until
+    // testing showed MathJax already renders them; rewriting them was pure
+    // loss, and for the colon relations the replacement rendered worse.
+    for (const tex of [
+      "\\coloneqq",
+      "\\Coloneqq",
+      "\\coloneq",
+      "\\eqqcolon",
+      "\\Eqqcolon",
+      "\\eqcolon",
+      "\\lparen x \\rparen",
+      "90\\degree",
+      "a \\gggtr b",
+      "\\mathllap{x}",
+      "\\mathrlap{x}",
+    ]) {
+      expect(applyMathJaxCompatibility(tex)).toBe(tex);
+    }
+  });
+
   it("rewrites the closed surface integral that MathJax cannot render", () => {
     const tex =
       "\\iiint_V (\\nabla \\cdot \\mathbf{F})\\, dV = \\oiint_{\\partial V} \\mathbf{F} \\cdot d\\mathbf{A}";
@@ -41,11 +62,11 @@ describe("applyMathJaxCompatibility", () => {
 
   it("consumes the whitespace that terminated the control word", () => {
     expect(applyMathJaxCompatibility("x \\rarr y")).toBe("x \\rightarrow y");
-    expect(applyMathJaxCompatibility("\\degree C")).toBe("{}^\\circ C");
+    expect(applyMathJaxCompatibility("\\sdot x")).toBe("\\cdot x");
   });
 
   it("respects a definition the expression provides for itself", () => {
-    const tex = "\\newcommand{\\degree}{^{\\circ}} 90\\degree";
+    const tex = "\\newcommand{\\sdot}{\\bullet} a \\sdot b";
     expect(applyMathJaxCompatibility(tex)).toBe(tex);
 
     const defTex = "\\def\\rarr{\\to} \\rarr";
@@ -62,8 +83,8 @@ describe("applyMathJaxCompatibility", () => {
 
 describe("findUnsupportedCommands", () => {
   it("names commands that cannot be repaired automatically", () => {
-    expect(findUnsupportedCommands("\\href{a}{b} + \\utilde{x}")).toEqual([
-      "href",
+    expect(findUnsupportedCommands("\\KaTeX + \\utilde{x}")).toEqual([
+      "KaTeX",
       "utilde",
     ]);
   });
@@ -71,5 +92,11 @@ describe("findUnsupportedCommands", () => {
   it("reports nothing for TeX it can render or repair", () => {
     expect(findUnsupportedCommands("\\oiint_{\\partial V} x")).toEqual([]);
     expect(findUnsupportedCommands("\\frac{1}{2}")).toEqual([]);
+  });
+
+  it("does not report commands Obsidian was shown to render natively", () => {
+    // Verified in Obsidian on 2026-09-08; see IDEAS.md I3.
+    const native = "\\ket{\\psi} \\cancel{x} \\href{u}{t} \\overparen{ab} \\mathclap{y}";
+    expect(findUnsupportedCommands(native)).toEqual([]);
   });
 });
