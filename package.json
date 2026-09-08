@@ -1,0 +1,43 @@
+{
+  "name": "obsidian-chatgpt-math-paste",
+  "version": "1.2.0",
+  "private": true,
+  "description": "An Obsidian plugin that preserves ChatGPT LaTeX when pasting responses.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/neutrinoevent/obsidian-chatgpt-math-paste.git"
+  },
+  "bugs": {
+    "url": "https://github.com/neutrinoevent/obsidian-chatgpt-math-paste/issues"
+  },
+  "homepage": "https://github.com/neutrinoevent/obsidian-chatgpt-math-paste#readme",
+  "keywords": [
+    "obsidian",
+    "obsidian-plugin",
+    "chatgpt",
+    "latex",
+    "mathml",
+    "markdown"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node esbuild.config.mjs",
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "check": "npm run test && npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.17",
+    "esbuild": "^0.25.5",
+    "jsdom": "^26.1.0",
+    "obsidian": "^1.13.1",
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
+  }
+}
