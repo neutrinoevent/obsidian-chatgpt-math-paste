@@ -1,6 +1,6 @@
 # Context handoff: ChatGPT Math Paste
 
-Last updated: 2026-09-08
+Last updated: 2026-10-29
 
 This file preserves the reasoning and implementation state needed to resume
 work without relying on private machine or vault context.
@@ -8,7 +8,7 @@ work without relying on private machine or vault context.
 ## Start here after a reboot
 
 1. Read this file, `README.md`, `CHANGELOG.md`, `SECURITY.md`, and `IDEAS.md`.
-2. Confirm `package.json` and `manifest.json` both report version `1.2.1`.
+2. Confirm `package.json` and `manifest.json` both report version `1.2.2`.
 3. Restore dependencies and verify the repository:
 
    ```bash
@@ -25,28 +25,27 @@ work without relying on private machine or vault context.
 
 ## Current checkpoint
 
-- Source and release version: `1.2.1`.
+- Source version: `1.2.2`.
 - Intended repository: `https://github.com/neutrinoevent/obsidian-chatgpt-math-paste`.
 - Git identity in use: `neutrinoevent` with the GitHub noreply address, so
   commit metadata carries no real name or personal email. Re-check this before
-  the first commit rather than assuming it.
+  each release commit rather than assuming it.
 - Functional state: manually tested successfully in Obsidian, including unusual
   math cases. The `1.2.0` renderer compatibility fix was confirmed in Obsidian
   on 2026-09-08 by re-pasting the response that originally failed.
-- Automated state: 118 tests pass across four suites, the production bundle
-  builds, and the dependency audit reported zero known vulnerabilities at the
-  last check. The fourth suite renders TeX through MathJax itself.
-- Release artifact: `chatgpt-math-paste-1.2.1.zip`. The superseded
+- Automated state: 123 tests pass across four suites and the production bundle
+  builds. The fourth suite renders TeX through MathJax itself. The 2026-10-29
+  dependency audit reports seven development/test findings; the shipped plugin
+  has no runtime npm dependencies.
+- Release artifact: `chatgpt-math-paste-1.2.2.zip`. The superseded
   `chatgpt-math-paste-1.1.0.zip` and `chatgpt-math-paste-1.2.0.zip` may still be
   present locally; both are ignored by Git.
 - Release checksum: stored separately in `SHA256SUMS` so the ZIP does not contain
   a self-referential checksum.
-- Publication state: the tree is a local Git repository on `main` with a single
-  reviewed source commit authored as `neutrinoevent` with the GitHub noreply
-  address. There is no tag, GitHub remote, GitHub release, or Obsidian
-  community-plugin submission yet. The sweep preceding that commit found no
-  absolute paths, usernames, emails, secrets, vault references, or macOS
-  metadata.
+- Publication state: the public GitHub repository uses `main` and has published
+  `1.2.0` and `1.2.1` releases. The source tree is prepared for `1.2.2`; check
+  GitHub rather than this handoff for whether that release has since been
+  published. Obsidian community-plugin submission is a separate workflow.
 - `SHA256SUMS` is ignored by Git by deliberate choice: a checksum is only
   meaningful next to the archive it covers, so both are release assets rather
   than source.
@@ -87,7 +86,7 @@ clipboard structure is lost. The original expression is available in a MathML
 - uses Obsidian's `htmlToMarkdown` helper;
 - replaces the current editor selection only when conversion succeeds;
 - exposes selection and whole-note normalization commands; and
-- persists three boolean settings through Obsidian's plugin data API.
+- persists four boolean settings through Obsidian's plugin data API.
 
 `src/tex-compat.ts` and `src/markdown-math.ts` are also independent of
 Obsidian. The first holds the KaTeX-to-MathJax command tables and the rewriting
@@ -178,6 +177,8 @@ refreshed together.
   an unsupported-command diagnostic, and `IDEAS.md`.
 - `1.2.1`: corrected closed-integral rendering, compatibility tables pruned
   against a real vault, and MathJax rendering tests.
+- `1.2.2`: support for ChatGPT clipboard HTML serialized as escaped-dollar
+  Markdown, with scoped subscript repair and code-region protection.
 
 The `1.2.0` tables were built from reasoning about which packages MathJax
 loads. Testing them in Obsidian 1.13.7 showed twelve of fifty-three
@@ -216,16 +217,16 @@ the repository.
 Use `RELEASE_CHECKLIST.md` as the authoritative publication sequence. Important
 state that a new session must preserve:
 
-- Review `git config user.name` and `git config user.email` before the first
+- Review `git config user.name` and `git config user.email` before the release
   commit; commit metadata can reveal an identity even when repository files do
   not.
 - Initialize Git only when publication work is requested.
 - Inspect the exact staged file list before committing. `node_modules`,
   `.DS_Store`, `main.js`, ZIP files, plugin `data.json`, and coverage output must
   remain excluded.
-- Tag the release as `1.2.1` or `v1.2.1` consistently with the chosen repository
+- Tag the release as `1.2.2` or `v1.2.2` consistently with the chosen repository
   convention. Obsidian manifests use the value without a leading `v`.
-- Upload `chatgpt-math-paste-1.2.1.zip` and `SHA256SUMS` as release assets because
+- Upload `chatgpt-math-paste-1.2.2.zip` and `SHA256SUMS` as release assets because
   both are intentionally outside normal source control.
 - Enabling private vulnerability reporting is a repository-owner action to take
   before or immediately after making the repository public.
@@ -235,7 +236,7 @@ state that a new session must preserve:
 After `npm run check`, construct the release ZIP from the project root:
 
 ```bash
-COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.1.zip \
+COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.2.zip \
   manifest.json main.js versions.json README.md LICENSE \
   CONTEXT_HANDOFF.md CHANGELOG.md SECURITY.md RELEASE_CHECKLIST.md IDEAS.md
 ```
@@ -243,9 +244,9 @@ COPYFILE_DISABLE=1 zip -X -j chatgpt-math-paste-1.2.1.zip \
 Then verify the archive before updating `SHA256SUMS`:
 
 ```bash
-unzip -t chatgpt-math-paste-1.2.1.zip
-zipinfo -1 chatgpt-math-paste-1.2.1.zip
-shasum -a 256 chatgpt-math-paste-1.2.1.zip
+unzip -t chatgpt-math-paste-1.2.2.zip
+zipinfo -1 chatgpt-math-paste-1.2.2.zip
+shasum -a 256 chatgpt-math-paste-1.2.2.zip
 ```
 
 Expected entries are relative top-level filenames only. Reject entries beginning

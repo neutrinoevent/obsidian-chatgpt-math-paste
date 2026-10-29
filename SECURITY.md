@@ -29,7 +29,7 @@ code for network access, direct filesystem access, process execution, shell
 commands, telemetry, analytics, API calls, credential access, or background note
 scanning.
 
-The plugin persists only three boolean preferences by using Obsidian's standard
+The plugin persists only four boolean preferences by using Obsidian's standard
 plugin data API. It does not persist clipboard content.
 
 ## Trust boundaries

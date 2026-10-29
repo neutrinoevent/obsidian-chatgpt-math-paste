@@ -15,6 +15,27 @@ Conventions:
 
 ## Defects
 
+### D2 — Escaped-dollar clipboard Markdown bypasses conversion
+
+State: `done` (1.2.2)
+Reported: 2026-10-29, from a normal ChatGPT paste into an Obsidian note.
+
+Observed: inline and display delimiters arrived as `\$...\$` and
+`\$$...\$$`, with TeX subscripts escaped as `\_`. Citation images and HTML
+entities from Obsidian's default rich-paste conversion appeared alongside the
+unrendered source.
+
+Diagnosis: the rich path only recognized MathML TeX annotations. With no
+annotation it returned control to Obsidian, while the plain path only
+recognized `\(...\)` and `\[...\]`. Neither path claimed the new serialized
+form.
+
+Fix: after Obsidian serializes clipboard HTML, the converter now recognizes
+paired escaped-dollar regions, restores serializer-escaped subscripts only
+inside those regions, and applies the existing MathJax compatibility rewrite.
+The scanner excludes inline code and fenced blocks and rejects unmatched or
+padded inline delimiters.
+
 ### D1 — KaTeX-only TeX commands fail to render in Obsidian's MathJax
 
 State: `done` (1.2.0, confirmed fixed in Obsidian 2026-09-08)

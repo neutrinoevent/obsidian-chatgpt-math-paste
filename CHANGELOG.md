@@ -3,6 +3,25 @@
 All notable changes to this project are documented here. Versions follow
 [Semantic Versioning](https://semver.org/).
 
+## [1.2.2] - 2026-10-29
+
+### Fixed
+
+- ChatGPT responses whose clipboard HTML serializes math as escaped Markdown
+  (`\$...\$` and `\$$...\$$`) are recognized again instead of falling through
+  to Obsidian's normal paste behavior.
+- Markdown-escaped subscripts such as `p\_{\mathrm{el}}` are restored to TeX
+  subscripts inside confirmed math regions without unescaping prose or URLs.
+- The escaped-Markdown fallback preserves surrounding rich Markdown, respects
+  inline and fenced code, and applies the existing MathJax compatibility
+  rewrite.
+
+### Added
+
+- Regression tests for the current escaped-dollar clipboard form, multi-line
+  display math, inline math, renderer compatibility, currency, unmatched
+  delimiters, and code regions.
+
 ## [1.2.1] - 2026-09-08
 
 ### Fixed

@@ -30,6 +30,7 @@ expects.
 ## Features
 
 - Converts rich KaTeX/MathML clipboard content into Obsidian Markdown.
+- Repairs ChatGPT clipboard HTML that serializes TeX as escaped Markdown.
 - Emits `$...$` for inline equations and `$$...$$` for display equations.
 - Removes duplicate accessible and visual equation renderings.
 - Uses Obsidian's own HTML-to-Markdown converter for surrounding content.
@@ -124,9 +125,12 @@ contains an `<annotation encoding="application/x-tex">` or
 4. asks Obsidian to convert the remaining HTML to Markdown; and
 5. replaces each marker with `$...$` or a `$$...$$` block.
 
-If no supported math annotation is present, the rich HTML path returns without
-interfering with Obsidian's normal paste behavior. The plain-text path only
-takes over when it actually changes a recognized delimiter.
+If no supported math annotation is present, the converter also checks the
+Markdown produced by Obsidian's HTML serializer for paired escaped math forms
+such as `\$x\_1\$` and `\$$x\_1\$$`. It repairs only confirmed math regions,
+leaving code, prose, URLs, unmatched dollar signs, and ordinary rich clipboard
+content under Obsidian's normal paste behavior. The plain-text path only takes
+over when it actually changes a recognized delimiter.
 
 ### Renderer compatibility
 
@@ -167,7 +171,7 @@ paste. It does not:
 - use an OpenAI API key or any other credential; or
 - collect analytics or telemetry.
 
-The only persisted data is the plugin's three boolean settings, stored through
+The only persisted data is the plugin's four boolean settings, stored through
 Obsidian's standard plugin settings API. See [SECURITY.md](SECURITY.md) for the
 reporting policy and trust boundaries.
 
@@ -233,6 +237,7 @@ See [CHANGELOG.md](CHANGELOG.md).
   existing notes, and an unsupported-command diagnostic.
 - `1.2.1` — corrected closed-integral rendering, pruned the compatibility
   tables against a real vault, and added MathJax rendering tests.
+- `1.2.2` — restored pasting from ChatGPT's escaped-dollar clipboard format.
 
 ## License
 

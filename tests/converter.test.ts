@@ -73,6 +73,39 @@ describe("convertMathHtmlToMarkdown", () => {
   it("leaves unrelated HTML to Obsidian's normal paste behavior", () => {
     expect(convertMathHtmlToMarkdown("<p>No math</p>", textOnly)).toBeNull();
   });
+
+  it("repairs math escaped by Obsidian's HTML-to-Markdown serializer", () => {
+    const serialized = [
+      "Writing the pressure as",
+      "",
+      "\\$$ p\\_{\\mathrm{el}}=\\frac12\\varepsilon_0 E^2 \\$$",
+      "",
+      "where \\$\\varepsilon_0\\$ is the vacuum baseline.",
+    ].join("\n");
+
+    expect(
+      convertMathHtmlToMarkdown("<p>ChatGPT response</p>", () => serialized),
+    ).toBe(
+      [
+        "Writing the pressure as",
+        "",
+        "$$ p_{\\mathrm{el}}=\\frac12\\varepsilon_0 E^2 $$",
+        "",
+        "where $\\varepsilon_0$ is the vacuum baseline.",
+      ].join("\n"),
+    );
+  });
+
+  it("applies MathJax compatibility to serialized escaped math", () => {
+    const converted = convertMathHtmlToMarkdown(
+      "<p>ChatGPT response</p>",
+      () => "\\$$ \\oiint\\_{\\partial V} \\$$",
+    );
+
+    expect(converted).not.toContain("\\oiint");
+    expect(converted).toContain("\\bigcirc");
+    expect(converted).toContain("\\nolimits_{\\partial V}");
+  });
 });
 
 describe("normalizeMathDelimiters", () => {
@@ -99,5 +132,42 @@ describe("normalizeMathDelimiters", () => {
     ].join("\n");
 
     expect(normalizeMathDelimiters(markdown)).toBe(expected);
+  });
+
+  it("normalizes paired escaped dollar delimiters and serialized subscripts", () => {
+    const markdown = [
+      "Inline \\$x\\_1\\$.",
+      "",
+      "\\$$",
+      "p\\_{\\mathrm{el}} = \\frac12\\varepsilon_0 E^2",
+      "\\$$",
+    ].join("\n");
+    const expected = [
+      "Inline $x_1$.",
+      "",
+      "$$",
+      "p_{\\mathrm{el}} = \\frac12\\varepsilon_0 E^2",
+      "$$",
+    ].join("\n");
+
+    expect(normalizeMathDelimiters(markdown)).toBe(expected);
+  });
+
+  it("preserves TeX backslash pairs before underscores", () => {
+    expect(normalizeMathDelimiters("\\$a\\\\_b\\$")).toBe("$a\\\\_b$");
+    expect(normalizeMathDelimiters("\\$a\\\\\\_b\\$")).toBe("$a\\\\_b$");
+  });
+
+  it("leaves unpaired escaped dollars, currency, and escaped math in code alone", () => {
+    const markdown = [
+      "A lone \\$ stays literal.",
+      "Prices \\$5 and \\$10 stay literal.",
+      "`inline \\$x\\_1\\$`",
+      "```text",
+      "display \\$$x\\_1\\$$",
+      "```",
+    ].join("\n");
+
+    expect(normalizeMathDelimiters(markdown)).toBe(markdown);
   });
 });
